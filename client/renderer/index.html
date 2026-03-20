@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src *; style-src 'self' 'unsafe-inline';">
+  <title>Local Notifier</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Auth screen -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-box">
+      <h1>Local Notifier</h1>
+      <div class="form-group">
+        <label>Сервер</label>
+        <input type="text" id="auth-server" placeholder="http://localhost:3000">
+      </div>
+      <div class="form-group">
+        <label>Имя пользователя</label>
+        <input type="text" id="auth-username" placeholder="username">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="auth-password" placeholder="password">
+      </div>
+      <div class="auth-buttons">
+        <button id="btn-login" class="btn primary">Войти</button>
+        <button id="btn-register" class="btn">Регистрация</button>
+      </div>
+      <div id="auth-error" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Main screen -->
+  <div id="main-screen" class="screen hidden">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span id="current-user"></span>
+        <button id="btn-logout" class="btn-icon" title="Выйти">&#x23FB;</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="chat">Чат</button>
+        <button class="nav-btn" data-tab="subscriptions">Подписки</button>
+        <button class="nav-btn" data-tab="settings">Настройки</button>
+      </nav>
+      <div class="connection-status">
+        <span id="ws-status" class="status-dot offline"></span>
+        <span id="ws-status-text">Отключён</span>
+        <button id="btn-reconnect" class="btn-icon" title="Переподключиться">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Chat tab -->
+      <div id="tab-chat" class="tab active">
+        <div class="tab-header">
+          <h2>Уведомления</h2>
+          <div class="tab-header-right">
+            <select id="chat-workflow-select">
+              <option value="">Все workflow</option>
+            </select>
+            <button id="btn-clear-chat" class="btn small">Очистить</button>
+          </div>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+          <div class="empty-state">Нет уведомлений</div>
+        </div>
+        <div class="chat-input-bar">
+          <select id="send-workflow-select" title="Workflow для отправки">
+            <option value="" disabled selected>Workflow...</option>
+          </select>
+          <input type="text" id="chat-input" placeholder="Введите сообщение или команду...">
+          <button id="btn-send" class="btn-send" title="Отправить">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subscriptions tab -->
+      <div id="tab-subscriptions" class="tab hidden">
+        <div class="tab-header">
+          <h2>Подписки на Workflow</h2>
+        </div>
+        <div class="subscribe-form">
+          <input type="text" id="sub-workflow-id" placeholder="Workflow ID">
+          <input type="text" id="sub-label" placeholder="Название">
+          <input type="text" id="sub-webhook" placeholder="Webhook URL (для команд)">
+          <button id="btn-subscribe" class="btn primary">Подписаться</button>
+        </div>
+        <div id="subscription-list" class="subscription-list"></div>
+      </div>
+
+      <!-- Settings tab -->
+      <div id="tab-settings" class="tab hidden">
+        <div class="tab-header">
+          <h2>Настройки</h2>
+        </div>
+        <div class="settings-form">
+          <div class="setting-item">
+            <label>Ваш токен для n8n</label>
+            <div class="token-display">
+              <input type="text" id="user-token-display" readonly class="full-width mono">
+              <button id="btn-copy-token" class="btn small">Копировать</button>
+            </div>
+            <p class="hint">Используйте этот токен в HTTP-нодах n8n для отправки уведомлений именно вам</p>
+          </div>
+          <hr>
+          <div class="setting-item">
+            <label class="toggle-label">
+              <input type="checkbox" id="setting-tray">
+              <span>Сворачивать в трей при закрытии</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label class="toggle-label">
+              <input type="checkbox" id="setting-autostart">
+              <span>Запускать при старте Windows</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label class="toggle-label">
+              <input type="checkbox" id="setting-sound">
+              <span>Звук уведомлений</span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>Адрес сервера</label>
+            <input type="text" id="setting-server" class="full-width">
+          </div>
+          <button id="btn-save-settings" class="btn primary">Сохранить</button>
+          <hr>
+          <div class="setting-item">
+            <label>Журнал ошибок</label>
+            <p class="hint" id="log-path-display"></p>
+            <button id="btn-open-log" class="btn small" style="margin-top:6px">Открыть файл лога</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

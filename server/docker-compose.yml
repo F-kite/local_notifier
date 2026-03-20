@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: local-notifier-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-local_notifier}
+      POSTGRES_USER: ${DB_USER:-notifier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-notifier_secret}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-notifier}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notifier-server:
+    build: .
+    container_name: local-notifier-server
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-local-notifier-jwt-secret-change-me}
+      - API_KEY=${API_KEY:-local-notifier-api-key-change-me}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-local_notifier}
+      - DB_USER=${DB_USER:-notifier}
+      - DB_PASSWORD=${DB_PASSWORD:-notifier_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg-data:
