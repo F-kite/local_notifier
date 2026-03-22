@@ -15,10 +15,12 @@ function requireApiKey(req, res, next) {
 
 // ============================================================
 // POST /api/notify/send — Send to specific user by token
+// POST /api/notify/send/:workflowId — same, workflow_id from URL
 // Telegram-like: replaces sendMessage
 // ============================================================
-router.post('/send', requireApiKey, async (req, res) => {
-  const { token, text, title, parse_mode, level, reply_markup, callback_url, workflow_id } = req.body;
+router.post('/send/:workflowId?', requireApiKey, async (req, res) => {
+  const { token, text, title, parse_mode, level, reply_markup, callback_url, workflow_id: bodyWorkflowId } = req.body;
+  const workflow_id = req.params.workflowId || bodyWorkflowId;
 
   if (!token || !text) {
     return res.status(400).json({ error: 'token and text are required' });
@@ -72,9 +74,11 @@ router.post('/send', requireApiKey, async (req, res) => {
 
 // ============================================================
 // POST /api/notify/broadcast — Send to all subscribers of workflow
+// POST /api/notify/broadcast/:workflowId — same, workflow_id from URL
 // ============================================================
-router.post('/broadcast', requireApiKey, async (req, res) => {
-  const { workflow_id, text, title, parse_mode, level, reply_markup, callback_url } = req.body;
+router.post('/broadcast/:workflowId?', requireApiKey, async (req, res) => {
+  const { workflow_id: bodyWorkflowId, text, title, parse_mode, level, reply_markup, callback_url } = req.body;
+  const workflow_id = req.params.workflowId || bodyWorkflowId;
 
   if (!workflow_id || !text) {
     return res.status(400).json({ error: 'workflow_id and text are required' });

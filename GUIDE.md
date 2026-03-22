@@ -29,20 +29,25 @@ X-API-Key: <значение из .env>
 
 **Замена Telegram Bot API `sendMessage`**
 
+`workflow_id` можно передать двумя способами — в URL или в body:
+
 ```
+POST /api/notify/send/:workflowId 
 POST /api/notify/send
 Content-Type: application/json
-X-API-Key: local-notifier-api-key-change-me
+X-API-Key: <значение из .env>
 ```
 
+Пример с `workflow_id` в URL (рекомендуется — не нужно указывать в body):
+```
+POST /api/notify/send/Y54wNEgXIN7Ww44I
+```
 ```json
 {
   "token": "abc123def456...",
   "text": "**Ошибка** в обработке заказа #1234\n\nДетали: таймаут подключения к БД",
   "title": "Ошибка в workflow",
-  "parse_mode": "markdown",
   "level": "error",
-  "workflow_id": "wf-order-processing",
   "callback_url": "https://n8n.company.local/webhook/order-callback",
   "reply_markup": {
     "inline_keyboard": [
@@ -65,7 +70,7 @@ X-API-Key: local-notifier-api-key-change-me
 | `title` | — | Заголовок уведомления |
 | `parse_mode` | — | `markdown` (по умолчанию) |
 | `level` | — | `info` / `warning` / `error` |
-| `workflow_id` | — | ID workflow для группировки |
+| `workflow_id` | — | ID workflow для группировки (можно указать в URL или в body) |
 | `callback_url` | — | URL куда отправлять callback при нажатии кнопок |
 | `reply_markup` | — | Inline-кнопки (формат как в Telegram Bot API) |
 
@@ -80,15 +85,21 @@ X-API-Key: local-notifier-api-key-change-me
 
 ### 2. Broadcast — уведомление всем подписчикам workflow
 
+`workflow_id` можно передать в URL или в body:
+
 ```
+POST /api/notify/broadcast/:workflowId
 POST /api/notify/broadcast
 Content-Type: application/json
-X-API-Key: local-notifier-api-key-change-me
+X-API-Key: <значение из .env>
 ```
 
+Пример с `workflow_id` в URL:
+```
+POST /api/notify/broadcast/Y54wNEgXIN7Ww44I
+```
 ```json
 {
-  "workflow_id": "wf-daily-report",
   "text": "📊 Ежедневный отчёт готов\n\nОбработано: **1 523** заказа\nОшибок: **3**",
   "title": "Ежедневный отчёт",
   "level": "info"
@@ -187,9 +198,9 @@ Telegram Bot → sendMessage
 ```
 HTTP Request
   Method: POST
-  URL: http://<server-ip>:3000/api/notify/send
+  URL: http://<server-ip>:3000/api/notify/send/<workflow-id>
   Headers:
-    X-API-Key: local-notifier-api-key-change-me
+    X-API-Key: <значение из .env>
     Content-Type: application/json
   Body (JSON):
     {
@@ -198,6 +209,8 @@ HTTP Request
       "level": "error"
     }
 ```
+
+> `workflow_id` берётся из URL автоматически — указывать его в body не нужно.
 
 #### Если нужны inline-кнопки:
 ```json
@@ -240,8 +253,8 @@ HTTP Request
 | `/api/auth/register` | POST | — | Регистрация пользователя |
 | `/api/auth/login` | POST | — | Вход |
 | `/api/auth/me` | GET | Bearer JWT | Профиль + токен |
-| `/api/notify/send` | POST | X-API-Key | Уведомление конкретному пользователю |
-| `/api/notify/broadcast` | POST | X-API-Key | Уведомление подписчикам workflow |
+| `/api/notify/send/:workflowId?` | POST | X-API-Key | Уведомление конкретному пользователю |
+| `/api/notify/broadcast/:workflowId?` | POST | X-API-Key | Уведомление подписчикам workflow |
 | `/api/notify/callback` | POST | Bearer JWT | Callback от нажатия кнопки |
 | `/api/subscriptions` | GET | Bearer JWT | Список подписок |
 | `/api/subscriptions` | POST | Bearer JWT | Подписаться на workflow |
