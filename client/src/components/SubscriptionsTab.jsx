@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { Pencil, X, Check } from 'lucide-react';
 
 export default function SubscriptionsTab({ subscriptions, onSubscribe, onUnsubscribe }) {
   const [workflowId, setWorkflowId] = useState('');
   const [label, setLabel] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editWebhookUrl, setEditWebhookUrl] = useState('');
 
   async function handleSubmit() {
     if (!workflowId.trim()) return;
@@ -11,6 +15,23 @@ export default function SubscriptionsTab({ subscriptions, onSubscribe, onUnsubsc
     setWorkflowId('');
     setLabel('');
     setWebhookUrl('');
+  }
+
+  function startEdit(s) {
+    setEditingId(s.workflow_id);
+    setEditLabel(s.label || '');
+    setEditWebhookUrl(s.webhook_url || '');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditLabel('');
+    setEditWebhookUrl('');
+  }
+
+  async function saveEdit(workflowId) {
+    await onSubscribe(workflowId, editLabel.trim(), editWebhookUrl.trim());
+    setEditingId(null);
   }
 
   return (
@@ -46,19 +67,48 @@ export default function SubscriptionsTab({ subscriptions, onSubscribe, onUnsubsc
         ) : (
           subscriptions.map(s => (
             <div key={s.workflow_id} className="subscription-item">
-              <div className="subscription-info">
-                <div className="subscription-label">{s.label || s.workflow_id}</div>
-                <div className="subscription-id">{s.workflow_id}</div>
-                {s.webhook_url && (
-                  <div className="subscription-webhook">{s.webhook_url}</div>
-                )}
-              </div>
-              <button
-                className="btn danger"
-                onClick={() => onUnsubscribe(s.workflow_id)}
-              >
-                Отписаться
-              </button>
+              {editingId === s.workflow_id ? (
+                <div className="subscription-edit">
+                  <input
+                    type="text"
+                    value={editLabel}
+                    onChange={e => setEditLabel(e.target.value)}
+                    placeholder="Название"
+                  />
+                  <input
+                    type="text"
+                    value={editWebhookUrl}
+                    onChange={e => setEditWebhookUrl(e.target.value)}
+                    placeholder="Webhook URL"
+                  />
+                  <div className="subscription-edit-actions">
+                    <button className="btn-icon" title="Сохранить" onClick={() => saveEdit(s.workflow_id)}>
+                      <Check size={18} />
+                    </button>
+                    <button className="btn-icon" title="Отмена" onClick={cancelEdit}>
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="subscription-info">
+                    <div className="subscription-label">{s.label || s.workflow_id}</div>
+                    <div className="subscription-id">{s.workflow_id}</div>
+                    {s.webhook_url && (
+                      <div className="subscription-webhook">{s.webhook_url}</div>
+                    )}
+                  </div>
+                  <div className="subscription-actions">
+                    <button className="btn-icon" title="Редактировать" onClick={() => startEdit(s)}>
+                      <Pencil size={16} />
+                    </button>
+                    <button className="btn danger" onClick={() => onUnsubscribe(s.workflow_id)}>
+                      Отписаться
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))
         )}

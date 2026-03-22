@@ -554,6 +554,30 @@ select option {
   word-break: break-all;
 }
 
+.subscription-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.subscription-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.subscription-edit input {
+  width: 100%;
+}
+
+.subscription-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 /* === Settings === */
 .settings-form {
   padding: 20px;
