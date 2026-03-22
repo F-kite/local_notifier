@@ -15,10 +15,8 @@ const store = new Store({
   },
 });
 
-// Error log file — in app root (portable) or userData (installed)
-const logPath = app.isPackaged
-  ? path.join(path.dirname(app.getPath('exe')), 'error.log')
-  : path.join(__dirname, 'error.log');
+// Error log file — in app root for dev, next to exe for production
+let logPath = path.join(__dirname, 'error.log');
 
 function writeLog(level, message) {
   const timestamp = new Date().toISOString();
@@ -45,7 +43,7 @@ function createWindow() {
     height: 650,
     minWidth: 600,
     minHeight: 450,
-    title: 'Local Notifier',
+    title: 'Алярм',
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
@@ -55,7 +53,17 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  // In dev mode, load from Vite dev server; in production, load built files
+  if (!app.isPackaged && process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else if (!app.isPackaged && fs.existsSync(path.join(__dirname, 'dist', 'index.html'))) {
+    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  } else if (app.isPackaged) {
+    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  } else {
+    // Fallback: try Vite dev server
+    mainWindow.loadURL('http://localhost:5173');
+  }
 
   mainWindow.on('close', (e) => {
     if (store.get('minimizeToTray') && !app.isQuitting) {
@@ -69,7 +77,7 @@ function createTray() {
   const iconPath = path.join(__dirname, 'assets', 'icon.png');
   const icon = nativeImage.createFromPath(iconPath);
   tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon);
-  tray.setToolTip('Local Notifier');
+  tray.setToolTip('Алярм');
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Открыть', click: () => mainWindow.show() },
@@ -108,9 +116,10 @@ ipcMain.handle('save-settings', (_, settings) => {
 
 ipcMain.handle('show-notification', (_, { title, body }) => {
   const notification = new Notification({
-    title: title || 'Local Notifier',
+    title: title || 'Алярм',
     body: body || '',
     silent: !store.get('soundEnabled'),
+    icon: path.join(__dirname, 'assets', 'icon.png'),
   });
   notification.show();
   notification.on('click', () => mainWindow.show());
@@ -130,6 +139,9 @@ ipcMain.handle('open-log-file', () => {
 ipcMain.handle('get-log-path', () => logPath);
 
 app.whenReady().then(() => {
+  if (app.isPackaged) {
+    logPath = path.join(path.dirname(app.getPath('exe')), 'error.log');
+  }
   createWindow();
   createTray();
   updateAutoStart();

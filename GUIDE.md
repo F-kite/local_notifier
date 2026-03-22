@@ -1,4 +1,4 @@
-# Local Notifier — Гайд по интеграции
+# Алярм — Гайд по интеграции
 
 ## Запуск
 
@@ -158,7 +158,7 @@ X-API-Key: local-notifier-api-key-change-me
 
 ---
 
-## Как настроить связь n8n ↔ Local Notifier
+## Как настроить связь n8n ↔ Алярм 
 
 ### Шаг 1. Развернуть сервер
 ```bash
@@ -183,7 +183,7 @@ Telegram Bot → sendMessage
   Text: Ошибка в обработке
 ```
 
-**Стало (Local Notifier):**
+**Стало (Алярм):**
 ```
 HTTP Request
   Method: POST
